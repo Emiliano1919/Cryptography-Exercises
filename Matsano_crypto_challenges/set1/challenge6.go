@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/base64"
+	"fmt"
 	"log"
 	"os"
 	"sort"
@@ -32,9 +33,53 @@ func HammingDistance(a []byte, b []byte) int {
 	return count
 }
 
+var freq = map[byte]float64{
+	' ': 13,
+	'e': 12.7, 't': 9.1, 'a': 8.2, 'o': 7.5, 'i': 7.0, 'n': 6.7,
+	's': 6.3, 'h': 6.1, 'r': 6.0, 'd': 4.3, 'l': 4.0, 'u': 2.8,
+}
+
+func scoreEnglish(text []byte) float64 {
+	score := 0.0
+	for _, c := range text {
+		c = byte(strings.ToLower(string(c))[0])
+		if val, ok := freq[c]; ok {
+			score += val
+		}
+	}
+	return score
+}
+
+func xorWithKey(data []byte, key byte) []byte {
+	out := make([]byte, len(data))
+	for i := range data {
+		out[i] = data[i] ^ key
+	}
+	return out
+}
+
 type Result struct {
 	KSize int
 	Score float64
+}
+
+func breakSingleByteXOR(cipher []byte) (byte, []byte, float64) {
+	var bestKey byte
+	var bestPlain []byte
+	var bestScore float64
+
+	for key := 0; key < 256; key++ {
+		plain := xorWithKey(cipher, byte(key))
+		score := scoreEnglish(plain)
+
+		if score > bestScore || key == 0 {
+			bestScore = score
+			bestKey = byte(key)
+			bestPlain = plain
+		}
+	}
+
+	return bestKey, bestPlain, bestScore
 }
 
 func main() {
@@ -89,7 +134,19 @@ func main() {
 			}
 		}
 	}
-	
+
+	key := make([]byte, keySize)
+	for i := range blocksByKey {
+		k, _, _ := breakSingleByteXOR(blocksByKey[i])
+		key[i] = k
+		println(k)
+	}
+	plaintext := make([]byte, len(bytes))
+	for i := range bytes {
+		plaintext[i] = bytes[i] ^ key[i%len(key)]
+	}
+
+	fmt.Println(string(plaintext))
 
 	// bplain := ([]byte(plain))
 	// word := "ICE"
