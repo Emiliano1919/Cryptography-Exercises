@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"log"
 	"os"
 	"sort"
@@ -45,7 +46,10 @@ func main() {
 		log.Fatal(err)
 	}
 	bigStr := strings.TrimSpace(string(data))
-	bytes := []byte(bigStr)
+	bytes, err := base64.StdEncoding.DecodeString(bigStr)
+	if err != nil {
+		log.Fatal(err)
+	}
 	results := []Result{}
 	for i := 2; i < 40; i++ {
 		inter := HammingDistance(bytes[0:i], bytes[i:2*i])
@@ -64,7 +68,28 @@ func main() {
 	}
 
 	avg := sum / float64(len(best4))
-	println(int(avg))
+	keySize := int(avg)
+	println(avg)
+	println(keySize)
+
+	var KeysizeList [][]byte
+	for j := 0; j < len(bytes); j += keySize {
+		end := j + keySize
+		if end > len(bytes) {
+			end = len(bytes)
+		}
+		KeysizeList = append(KeysizeList, bytes[j:end])
+	}
+
+	blocksByKey := make([][]byte, keySize)
+	for k := 0; k < len(KeysizeList); k++ {
+		for t := 0; t < keySize; t++ {
+			if t < len(KeysizeList[k]) { // in case last block
+				blocksByKey[t] = append(blocksByKey[t], KeysizeList[k][t])
+			}
+		}
+	}
+	
 
 	// bplain := ([]byte(plain))
 	// word := "ICE"
