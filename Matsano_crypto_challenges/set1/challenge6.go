@@ -85,77 +85,70 @@ func breakSingleByteXOR(cipher []byte) (byte, []byte, float64) {
 func main() {
 	test1 := `this is a test`
 	test2 := `wokka wokka!!!`
-	println(HammingDistance([]byte(test1), []byte(test2)))
+	fmt.Printf("The result of the hamming distance test is: %d \n", HammingDistance([]byte(test1), []byte(test2)))
+
 	data, err := os.ReadFile("Challenge6.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
-	bigStr := strings.TrimSpace(string(data))
+	bigStr := strings.ReplaceAll(string(data), "\n", "")
 	bytes, err := base64.StdEncoding.DecodeString(bigStr)
 	if err != nil {
 		log.Fatal(err)
 	}
 	results := []Result{}
 	for i := 2; i < 40; i++ {
-		inter := HammingDistance(bytes[0:i], bytes[i:2*i])
-		final := float64(inter) / float64(i)
-		results = append(results, Result{i, final})
+		b1 := bytes[0:i]
+		b2 := bytes[i : 2*i]
+		b3 := bytes[2*i : 3*i]
+		b4 := bytes[3*i : 4*i]
+
+		d1 := HammingDistance(b1, b2)
+		d2 := HammingDistance(b2, b3)
+		d3 := HammingDistance(b3, b4)
+
+		avg := float64(d1+d2+d3) / 3.0
+		score := avg / float64(i)
+
+		results = append(results, Result{i, score})
 	}
 
 	sort.Slice(results, func(a, b int) bool {
 		return results[a].Score < results[b].Score
 	})
 
-	best4 := results[0:4]
-	sum := 0.0
-	for _, r := range best4 {
-		sum += r.Score
-	}
-
-	avg := sum / float64(len(best4))
-	keySize := int(avg)
-	println(avg)
-	println(keySize)
-
-	var KeysizeList [][]byte
-	for j := 0; j < len(bytes); j += keySize {
-		end := j + keySize
-		if end > len(bytes) {
-			end = len(bytes)
+	for _, candidate := range results[:3] {
+		keySize := candidate.KSize
+		var KeysizeList [][]byte
+		for j := 0; j < len(bytes); j += keySize {
+			end := j + keySize
+			if end > len(bytes) {
+				end = len(bytes)
+			}
+			KeysizeList = append(KeysizeList, bytes[j:end])
 		}
-		KeysizeList = append(KeysizeList, bytes[j:end])
-	}
 
-	blocksByKey := make([][]byte, keySize)
-	for k := 0; k < len(KeysizeList); k++ {
-		for t := 0; t < keySize; t++ {
-			if t < len(KeysizeList[k]) { // in case last block
-				blocksByKey[t] = append(blocksByKey[t], KeysizeList[k][t])
+		blocksByKey := make([][]byte, keySize)
+		for k := 0; k < len(KeysizeList); k++ {
+			for t := 0; t < keySize; t++ {
+				if t < len(KeysizeList[k]) { // in case last block
+					blocksByKey[t] = append(blocksByKey[t], KeysizeList[k][t])
+				}
 			}
 		}
+
+		key := make([]byte, keySize)
+		for i := range blocksByKey {
+			k, _, _ := breakSingleByteXOR(blocksByKey[i])
+			key[i] = k
+		}
+		plaintext := make([]byte, len(bytes))
+		for i := range bytes {
+			plaintext[i] = bytes[i] ^ key[i%len(key)]
+		}
+		fmt.Println("===================================")
+		fmt.Printf("The keysize is: %d . \nThe plaintext is: \n%s", keySize, string(plaintext))
+		fmt.Println("===================================")
 	}
 
-	key := make([]byte, keySize)
-	for i := range blocksByKey {
-		k, _, _ := breakSingleByteXOR(blocksByKey[i])
-		key[i] = k
-		println(k)
-	}
-	plaintext := make([]byte, len(bytes))
-	for i := range bytes {
-		plaintext[i] = bytes[i] ^ key[i%len(key)]
-	}
-
-	fmt.Println(string(plaintext))
-
-	// bplain := ([]byte(plain))
-	// word := "ICE"
-	// bword := ([]byte(word))
-	// result := make([]byte, len(plain))
-	// for index, b := range bplain {
-	// 	letterIndex := index % 3
-	// 	letter := bword[letterIndex]
-	// 	result[index] = b ^ letter
-	// }
-	// println(hex.EncodeToString(result))
 }
