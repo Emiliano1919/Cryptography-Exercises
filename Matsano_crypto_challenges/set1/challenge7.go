@@ -2,7 +2,6 @@ package main
 
 import (
 	"crypto/aes"
-	"crypto/cipher"
 	"encoding/base64"
 	"log"
 	"os"
@@ -19,6 +18,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	aes.NewCipher()
-	cipher.Block.Decrypt()
+	key := "YELLOW SUBMARINE"
+	keyBytes := []byte(key)
+	println(bytes)
+	println(len(keyBytes))
+	block, err := aes.NewCipher(keyBytes)
+	if err != nil {
+		log.Fatal(err)
+	}
+	result := make([]byte, len(bytes))
+	blockSize := block.BlockSize() // 16 bytes at a time
+	for i := 0; i < len(bytes); i += blockSize {
+		block.Decrypt(result[i:i+blockSize], bytes[i:i+blockSize]) // We have to decrypt it 16 bytes at a time
+	}
+	println(string(result))
 }
