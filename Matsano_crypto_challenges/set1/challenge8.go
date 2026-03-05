@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-const blockSize = 16
+const blockSize = 16 // The block size for AES
 
 func counterOfRepeat(cipher []byte) int {
 
@@ -42,6 +42,7 @@ func main() {
 			bestIndex = j
 			maxNumberOfRepeats = current
 		}
+		// This are pieces of my original solution, it worked but not really good for future reference
 		// set := make(map[[]byte]struct{}) sad does not work because not comparable, cant use []byte
 		// set := make(map[string]struct{})
 
