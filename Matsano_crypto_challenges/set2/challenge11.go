@@ -4,11 +4,9 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/rand"
-	"encoding/base64"
 	"fmt"
 	"log"
-	"os"
-	"strings"
+	mrand "math/rand"
 )
 
 func decryptECB(key string, bytes []byte) string {
@@ -24,9 +22,8 @@ func decryptECB(key string, bytes []byte) string {
 	}
 	return string(result)
 }
-func encryptECB(key string, bytes []byte) string {
-	keyBytes := []byte(key)
-	block, err := aes.NewCipher(keyBytes)
+func encryptECB(key []byte, bytes []byte) string {
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -80,9 +77,8 @@ func xorBytesInPlace(a, b []byte) {
 	}
 }
 
-func encryptCBC(iv []byte, key string, bytes []byte) []byte {
-	keyBytes := []byte(key)
-	block, err := aes.NewCipher(keyBytes)
+func encryptCBC(iv []byte, key []byte, bytes []byte) []byte {
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -124,28 +120,31 @@ func randomKey16Bytes() []byte {
 	return key
 }
 
+func encryption_oracle(plaintext []byte) []byte {
+	key := randomKey16Bytes()
+	rand1Size := mrand.Intn(6) + 5
+	rand2Size := mrand.Intn(6) + 5
+	first := make([]byte, rand1Size)
+	rand.Read(first)
+	last := make([]byte, rand2Size)
+	rand.Read(last)
+	plaintext = append(first, plaintext...)
+	plaintext = append(plaintext, last...)
+	if mrand.Intn(2) == 0 {
+		return []byte(encryptECB(key, plaintext))
+	} else {
+		iv := make([]byte, 16)
+		rand.Read(iv)
+		return encryptCBC(plaintext, key, iv)
+	}
+}
+
 func main() {
-	key := "YELLOW SUBMARINE"
-	iv := make([]byte, 16)
 	test := "QUE CLASE de perro es este? Un perritoooooo :)"
 	bytesTest := []byte(test)
-	paddedByteTest := padByteToNextMultipleOf(bytesTest, 16) // We need to pad it to an acceptable length multiple of 16
-	fmt.Printf("Result padding plaintext test: %q\n", paddedByteTest)
-	encryptedTest := encryptCBC(iv, key, paddedByteTest)
-	fmt.Printf("Result encryption test: %q\n", encryptedTest)
-	decryptedTest := decryptCBC(iv, key, []byte(encryptedTest))
-	fmt.Printf("Result decryption test: %q\n", decryptedTest)
-	data, err := os.ReadFile("Challenge10.txt")
-	if err != nil {
-		log.Fatal(err)
-	}
-	clean := strings.ReplaceAll(string(data), "\n", "")
-	// Apparently it is encoded base64 but it does not say that in the challenge
-	ciphertext, err := base64.StdEncoding.DecodeString(clean)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	decryptedBytes := decryptCBC(iv, key, ciphertext)
-	fmt.Printf("Result decryption of text:\n%s", decryptedBytes)
+	fmt.Printf("Result padding plaintext test: %q\n", test)
+	encryptedTest := encryption_oracle(bytesTest)
+	fmt.Printf("Result encryption test1: %q\n", encryptedTest)
+	encryptedTest = encryption_oracle(bytesTest)
+	fmt.Printf("Result encryption test2: %q\n", encryptedTest)
 }
