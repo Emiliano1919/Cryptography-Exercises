@@ -130,12 +130,15 @@ func encryption_oracle(plaintext []byte) []byte {
 	rand.Read(last)
 	plaintext = append(first, plaintext...)
 	plaintext = append(plaintext, last...)
+	plaintext = padByteToNextMultipleOf(plaintext, 16)
 	if mrand.Intn(2) == 0 {
+		println("ECB")
 		return []byte(encryptECB(key, plaintext))
 	} else {
+		println("CBC")
 		iv := make([]byte, 16)
 		rand.Read(iv)
-		return encryptCBC(plaintext, key, iv)
+		return encryptCBC(iv, key, plaintext)
 	}
 }
 
