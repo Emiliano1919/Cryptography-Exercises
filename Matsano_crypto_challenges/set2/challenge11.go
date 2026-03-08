@@ -141,13 +141,34 @@ func encryption_oracle(plaintext []byte) []byte {
 		return encryptCBC(iv, key, plaintext)
 	}
 }
+func counterOfRepeat(cipher []byte) int {
 
+	seen := make(map[string]struct{})
+	totalBlocks := 0
+
+	for i := 0; i+blockSize <= len(cipher); i += blockSize {
+		block := string(cipher[i : i+blockSize])
+		seen[block] = struct{}{}
+		totalBlocks++
+	}
+
+	return totalBlocks - len(seen)
+}
+
+const blockSize = 16 // The block size for AES
 func main() {
 	test := "QUE CLASE de perro es este? Un perritoooooo :)"
 	bytesTest := []byte(test)
 	fmt.Printf("Result padding plaintext test: %q\n", test)
 	encryptedTest := encryption_oracle(bytesTest)
 	fmt.Printf("Result encryption test1: %q\n", encryptedTest)
+	if counterOfRepeat(encryptedTest) > 0 {
+
+		println("------------------------ECB")
+	}
 	encryptedTest = encryption_oracle(bytesTest)
 	fmt.Printf("Result encryption test2: %q\n", encryptedTest)
+	if counterOfRepeat(encryptedTest) > 0 {
+		println("------------------------ECB")
+	}
 }
