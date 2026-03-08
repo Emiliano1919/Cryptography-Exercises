@@ -105,13 +105,13 @@ func decryptCBC(iv []byte, key string, bytes []byte) []byte {
 	}
 	result := make([]byte, len(bytes))
 	blockSize := block.BlockSize() // 16 bytes at a time
-	xorBytesInPlace(bytes[0:blockSize], iv)
 	for i := 0; i < len(bytes); i += blockSize {
-		if i != 0 {
-			// Here we do the XOR
-			xorBytesInPlace(bytes[i:i+blockSize], result[i-blockSize:i])
-		}
 		block.Decrypt(result[i:i+blockSize], bytes[i:i+blockSize])
+		if i == 0 {
+			xorBytesInPlace(result[i:i+blockSize], iv)
+		} else {
+			xorBytesInPlace(result[i:i+blockSize], bytes[i-blockSize:i])
+		}
 	}
 	return result
 }
