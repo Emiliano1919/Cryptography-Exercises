@@ -3,9 +3,11 @@ package main
 import (
 	"bytes"
 	"crypto/aes"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"os"
+	"strings"
 )
 
 func decryptECB(key string, bytes []byte) string {
@@ -130,5 +132,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	clean := strings.ReplaceAll(string(data), "\n", "")
+	// Apparently it is encoded base64 but it does not say that in the challenge
+	ciphertext, err := base64.StdEncoding.DecodeString(clean)
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	decryptedBytes := decryptCBC(iv, key, ciphertext)
+	fmt.Printf("Result decryption of text:\n%s", decryptedBytes)
 }
