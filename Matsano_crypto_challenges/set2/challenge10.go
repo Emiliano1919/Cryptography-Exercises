@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 )
 
 func decryptECB(key string, bytes []byte) string {
@@ -118,18 +117,18 @@ func decryptCBC(iv []byte, key string, bytes []byte) []byte {
 
 func main() {
 	key := "YELLOW SUBMARINE"
+	iv := make([]byte, 16)
 	test := "QUE CLASE de perro es este? Un perritoooooo :)"
 	bytesTest := []byte(test)
 	paddedByteTest := padByteToNextMultipleOf(bytesTest, 16) // We need to pad it to an acceptable length multiple of 16
 	fmt.Printf("Result padding plaintext test: %q\n", paddedByteTest)
-	encryptedTest := encryptECB(key, paddedByteTest)
+	encryptedTest := encryptCBC(iv, key, paddedByteTest)
 	fmt.Printf("Result encryption test: %q\n", encryptedTest)
-	decryptedTest := decryptECB(key, []byte(encryptedTest))
+	decryptedTest := decryptCBC(iv, key, []byte(encryptedTest))
 	fmt.Printf("Result decryption test: %q\n", decryptedTest)
 	data, err := os.ReadFile("Challenge10.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
-	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
 
 }
