@@ -22,7 +22,7 @@ func decryptECB(key string, bytes []byte) string {
 	}
 	return string(result)
 }
-func encryptECB(key []byte, bytes []byte) string {
+func encryptECB(key []byte, bytes []byte) []byte {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		log.Fatal(err)
@@ -32,7 +32,7 @@ func encryptECB(key []byte, bytes []byte) string {
 	for i := 0; i < len(bytes); i += blockSize {
 		block.Encrypt(result[i:i+blockSize], bytes[i:i+blockSize]) // We have to encrypt it 16 bytes at a time
 	}
-	return string(result)
+	return result
 }
 
 func padByteVersion(plaintext []byte, size int) []byte {
@@ -156,19 +156,24 @@ func counterOfRepeat(cipher []byte) int {
 }
 
 const blockSize = 16 // The block size for AES
+
+func isECB(cipher []byte) {
+	if counterOfRepeat(cipher) > 0 {
+		println("\n It is ------ECB-------\n")
+	} else {
+		println("\n It is ------CBC-------\n")
+	}
+}
 func main() {
-	test := "QUE CLASE de perro es este? Un perritoooooo :)"
+	// This detection depends on Chosen Plaintext Attack (CPA)
+	test := "QUE CLASE de perro es este? Un perritoooooo :)oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo"
 	bytesTest := []byte(test)
 	fmt.Printf("Result padding plaintext test: %q\n", test)
 	encryptedTest := encryption_oracle(bytesTest)
 	fmt.Printf("Result encryption test1: %q\n", encryptedTest)
-	if counterOfRepeat(encryptedTest) > 0 {
-
-		println("------------------------ECB")
-	}
+	isECB(encryptedTest)
 	encryptedTest = encryption_oracle(bytesTest)
 	fmt.Printf("Result encryption test2: %q\n", encryptedTest)
-	if counterOfRepeat(encryptedTest) > 0 {
-		println("------------------------ECB")
-	}
+	isECB(encryptedTest)
+
 }
