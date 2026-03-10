@@ -84,15 +84,7 @@ func randomKey16Bytes() []byte {
 }
 
 func encryption_oracle_ECB(plaintext []byte) []byte {
-	lastPlain := `Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg
-aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq
-dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg
-YnkK`
-	last, err := base64.StdEncoding.DecodeString(lastPlain)
-	if err != nil {
-		log.Fatal(err)
-	}
-	lastBytes := []byte(last)
+	lastBytes := []byte(lastB64)
 	plaintext = append(plaintext, lastBytes...)
 	plaintext = padByteToNextMultipleOf(plaintext, 16)
 	return []byte(encryptECB(stableKey, plaintext))
@@ -118,17 +110,34 @@ func isECB(cipher []byte) {
 }
 
 const blockSize = 16 // The block size for AES
+var lastB64 []byte
 var stableKey []byte
+var alphabet = []byte{
+	'A', 'B', 'C', 'D', 'E', 'F', 'G',
+	'H', 'I', 'J', 'K', 'L', 'M', 'N',
+	'O', 'P', 'Q', 'R', 'S', 'T',
+	'U', 'V', 'W', 'X', 'Y', 'Z',
+	'a', 'b', 'c', 'd', 'e', 'f', 'g',
+	'h', 'i', 'j', 'k', 'l', 'm', 'n',
+	'o', 'p', 'q', 'r', 's', 't',
+	'u', 'v', 'w', 'x', 'y', 'z',
+}
+
+const lastPlain = `Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg
+aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq
+dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg
+YnkK`
 
 func init() {
 	stableKey = make([]byte, 16)
 	rand.Read(stableKey)
+	lastB64, _ = base64.StdEncoding.DecodeString(lastPlain)
 }
 
 func main() {
 	// This detection depends on Chosen Plaintext Attack (CPA)
 	var test string
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 17; i++ {
 		test += "A"
 		bytesTest := []byte(test)
 		encryptedTest := encryption_oracle_ECB(bytesTest)
@@ -137,4 +146,27 @@ func main() {
 		println(len(bytesTest))
 		fmt.Printf("Result encryption test1: \n%q\n", encryptedTest)
 	}
+	base := "AAAAAAAAAAAAAAA"
+	dictionary := make(map[string]string)
+
+	for _, l := range alphabet {
+		lbase := base + string(l)
+		out := encryption_oracle_ECB([]byte(lbase))
+		block := string(out[:16])
+		dictionary[block] = string(l)
+	}
+	println("-----------------Let's try this--------------------\n")
+	for _, x := range lastB64 {
+		xbase := base + string(x)
+		out := encryptECB(stableKey, []byte(xbase))
+		fmt.Print(dictionary[string(out[:16])])
+	}
+
+	println("\n-------Same result?----------\n")
+	for _, x := range lastB64 {
+		xbase := base + string(x)
+		out := encryption_oracle_ECB([]byte(xbase))
+		fmt.Print(dictionary[string(out[:16])])
+	}
+
 }
