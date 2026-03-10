@@ -77,43 +77,6 @@ func xorBytesInPlace(a, b []byte) {
 	}
 }
 
-func encryptCBC(iv []byte, key []byte, bytes []byte) []byte {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		log.Fatal(err)
-	}
-	result := make([]byte, len(bytes))
-	blockSize := block.BlockSize() // 16 bytes at a time
-	xorBytesInPlace(bytes[0:blockSize], iv)
-	for i := 0; i < len(bytes); i += blockSize {
-		if i != 0 {
-			// Here we do the XOR
-			xorBytesInPlace(bytes[i:i+blockSize], result[i-blockSize:i])
-		}
-		block.Encrypt(result[i:i+blockSize], bytes[i:i+blockSize])
-	}
-	return result
-}
-
-func decryptCBC(iv []byte, key string, bytes []byte) []byte {
-	keyBytes := []byte(key)
-	block, err := aes.NewCipher(keyBytes)
-	if err != nil {
-		log.Fatal(err)
-	}
-	result := make([]byte, len(bytes))
-	blockSize := block.BlockSize() // 16 bytes at a time
-	for i := 0; i < len(bytes); i += blockSize {
-		block.Decrypt(result[i:i+blockSize], bytes[i:i+blockSize])
-		if i == 0 {
-			xorBytesInPlace(result[i:i+blockSize], iv)
-		} else {
-			xorBytesInPlace(result[i:i+blockSize], bytes[i-blockSize:i])
-		}
-	}
-	return result
-}
-
 func randomKey16Bytes() []byte {
 	key := make([]byte, 16)
 	rand.Read(key)
@@ -151,8 +114,6 @@ func counterOfRepeat(cipher []byte) int {
 func isECB(cipher []byte) {
 	if counterOfRepeat(cipher) > 0 {
 		println("\n It is ------ECB-------\n")
-	} else {
-		println("\n It is ------CBC-------\n")
 	}
 }
 
@@ -171,6 +132,7 @@ func main() {
 		test += "A"
 		bytesTest := []byte(test)
 		encryptedTest := encryption_oracle_ECB(bytesTest)
+		isECB(encryptedTest)
 		println(i)
 		println(len(bytesTest))
 		fmt.Printf("Result encryption test1: \n%q\n", encryptedTest)
