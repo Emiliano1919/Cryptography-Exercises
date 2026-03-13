@@ -85,7 +85,6 @@ func randomKey16Bytes() []byte {
 }
 
 func encryption_oracle_ECB(plaintext []byte) []byte {
-	prefixSize := mrand.Intn(128)
 	prefix := make([]byte, prefixSize)
 	rand.Read(prefix)
 	plaintext = append(prefix, plaintext...)
@@ -116,6 +115,7 @@ func isECB(cipher []byte) {
 
 const blockSize = 16 // The block size for AES
 var lastB64 []byte
+var prefixSize int
 var stableKey []byte
 var alphabet = []byte{
 	'A', 'B', 'C', 'D', 'E', 'F', 'G',
@@ -137,17 +137,35 @@ func init() {
 	stableKey = make([]byte, 16)
 	rand.Read(stableKey)
 	lastB64, _ = base64.StdEncoding.DecodeString(lastPlain)
+	prefixSize = mrand.Intn(128)
 }
 
 func main() {
 	// This detection depends on Chosen Plaintext Attack (CPA)
-	base := "AAAAAAAAAAAAAAA"
+	twoBlock := make([]byte, 48) //32 bytes
+	output := encryption_oracle_ECB([]byte(twoBlock))
+	set := make(map[string]int)
+	var initialIndex int
+	for i := 0; i < len(output); i += blockSize {
+		current := string(output[i : i+blockSize])
+		println(i)
+		println(current)
+		if initial, exists := set[current]; exists {
+			fmt.Println("ECB mode here")
+			fmt.Printf("Starting index is: %d \n", initial)
+			initialIndex = initial
+		} else {
+			set[current] = i
+		}
+	}
+
+	base := string(make([]byte, 15)) //15As so 15 bytes
 	dictionary := make(map[string]string)
 
 	for _, l := range alphabet {
 		lbase := base + string(l)
 		out := encryption_oracle_ECB([]byte(lbase))
-		block := string(out[:16])
+		block := string(out[initialIndex : initialIndex+blockSize])
 		dictionary[block] = string(l)
 	}
 
@@ -155,7 +173,7 @@ func main() {
 	for _, x := range lastB64 {
 		xbase := base + string(x)
 		out := encryption_oracle_ECB([]byte(xbase))
-		fmt.Print(dictionary[string(out[:16])])
+		fmt.Print(dictionary[string(out[initialIndex:initialIndex+blockSize])])
 	}
 
 }
