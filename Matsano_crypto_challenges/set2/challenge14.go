@@ -113,7 +113,7 @@ func isECB(cipher []byte) {
 	}
 }
 
-const blockSize = 16 // The block size for AES
+const blockSize = 16 // The block size for AES (We find the size using techniques from previous challenges but I skip it for this problem)
 var lastB64 []byte
 var prefixSize int
 var stableKey []byte
@@ -142,7 +142,7 @@ func init() {
 
 func main() {
 	// This detection depends on Chosen Plaintext Attack (CPA)
-	twoBlock := make([]byte, 48) //32 bytes
+	twoBlock := make([]byte, 48) //48 bytes
 	output := encryption_oracle_ECB([]byte(twoBlock))
 	set := make(map[string]int)
 	var initialIndex int
@@ -159,7 +159,7 @@ func main() {
 		}
 	}
 
-	base := string(make([]byte, 15)) //15As so 15 bytes
+	base := string(make([]byte, 15)) //15 so 15 bytes as base to build dictionary
 	dictionary := make(map[string]string)
 
 	for _, l := range alphabet {

@@ -152,21 +152,21 @@ func main() {
 	for _, l := range alphabet {
 		lbase := base + string(l)
 		out := encryption_oracle_ECB([]byte(lbase))
-		block := string(out[:16])
+		block := string(out[:blockSize])
 		dictionary[block] = string(l)
 	}
 	println("-----------------Let's try this--------------------\n")
 	for _, x := range lastB64 {
 		xbase := base + string(x)
 		out := encryptECB(stableKey, []byte(xbase))
-		fmt.Print(dictionary[string(out[:16])])
+		fmt.Print(dictionary[string(out[:blockSize])])
 	}
 
 	println("\n-------Same result?----------\n")
 	for _, x := range lastB64 {
 		xbase := base + string(x)
 		out := encryption_oracle_ECB([]byte(xbase))
-		fmt.Print(dictionary[string(out[:16])])
+		fmt.Print(dictionary[string(out[:blockSize])])
 	}
 
 }
