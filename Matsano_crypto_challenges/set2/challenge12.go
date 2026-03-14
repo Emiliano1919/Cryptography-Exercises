@@ -84,6 +84,12 @@ func randomKey16Bytes() []byte {
 }
 
 func encryption_oracle_ECB(plaintext []byte) []byte {
+	var lastB64 []byte
+	const lastPlain = `Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg
+aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq
+dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg
+YnkK`
+	lastB64, _ = base64.StdEncoding.DecodeString(lastPlain)
 	lastBytes := []byte(lastB64)
 	plaintext = append(plaintext, lastBytes...)
 	plaintext = padByteToNextMultipleOf(plaintext, 16)
@@ -93,7 +99,6 @@ func counterOfRepeat(cipher []byte) int {
 
 	seen := make(map[string]struct{})
 	totalBlocks := 0
-
 	for i := 0; i+blockSize <= len(cipher); i += blockSize {
 		block := string(cipher[i : i+blockSize])
 		seen[block] = struct{}{}
@@ -110,7 +115,7 @@ func isECB(cipher []byte) {
 }
 
 const blockSize = 16 // The block size for AES
-var lastB64 []byte
+
 var stableKey []byte
 var alphabet = []byte{
 	'A', 'B', 'C', 'D', 'E', 'F', 'G',
@@ -123,15 +128,35 @@ var alphabet = []byte{
 	'u', 'v', 'w', 'x', 'y', 'z',
 }
 
-const lastPlain = `Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg
-aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq
-dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg
-YnkK`
-
 func init() {
 	stableKey = make([]byte, 16)
 	rand.Read(stableKey)
-	lastB64, _ = base64.StdEncoding.DecodeString(lastPlain)
+}
+func buildDictionary(base string, blockStartIndex int) map[string]string {
+	dictionary := make(map[string]string)
+	for _, l := range alphabet {
+		lbase := base + string(l)
+		out := encryption_oracle_ECB([]byte(lbase))
+		block := string(out[blockStartIndex : blockSize+blockStartIndex])
+		dictionary[block] = string(l)
+	}
+	return dictionary
+}
+
+func byteByByteDecryption() {
+	size := encryption_oracle_ECB(nil)
+	decryptedBytes := 0
+	for decryptedBytes < len(size) {
+		baseSize := decryptedBytes % (blockSize - 1)
+		blockNumber := decryptedBytes / blockSize
+		blockIndex := blockNumber * blockSize
+		base := string(make([]byte, baseSize))
+		currentDictionary := buildDictionary(base, blockIndex)
+		currentOut := encryption_oracle_ECB([]byte(base))
+		fmt.Print(currentDictionary[string(currentOut[blockIndex:blockIndex+blockSize])])
+		decryptedBytes++
+	}
+
 }
 
 func main() {
@@ -146,27 +171,7 @@ func main() {
 		println(len(bytesTest))
 		fmt.Printf("Result encryption test1: \n%q\n", encryptedTest)
 	}
-	base := "AAAAAAAAAAAAAAA"
-	dictionary := make(map[string]string)
-
-	for _, l := range alphabet {
-		lbase := base + string(l)
-		out := encryption_oracle_ECB([]byte(lbase))
-		block := string(out[:blockSize])
-		dictionary[block] = string(l)
-	}
 	println("-----------------Let's try this--------------------\n")
-	for _, x := range lastB64 {
-		xbase := base + string(x)
-		out := encryptECB(stableKey, []byte(xbase))
-		fmt.Print(dictionary[string(out[:blockSize])])
-	}
-
-	println("\n-------Same result?----------\n")
-	for _, x := range lastB64 {
-		xbase := base + string(x)
-		out := encryption_oracle_ECB([]byte(xbase))
-		fmt.Print(dictionary[string(out[:blockSize])])
-	}
+	byteByByteDecryption()
 
 }
