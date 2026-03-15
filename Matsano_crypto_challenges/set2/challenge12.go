@@ -127,7 +127,7 @@ func buildDictionary(base string, blockStartIndex int) map[string]string {
 	// Full 256 ASCII
 	for l := 0; l < 256; l++ {
 		lbase := base + string(l)
-		println(lbase)
+		//println(lbase)
 		out := encryption_oracle_ECB([]byte(lbase))
 		block := string(out[blockStartIndex : blockSize+blockStartIndex])
 		dictionary[block] = string(l)
@@ -146,12 +146,13 @@ func byteByByteDecryption() {
 		baseDic := bytes.Repeat([]byte("A"), baseSize) // This one needs the decrypted bytes to build the dictionary
 		baseDic = append(baseDic, decryptedLetters...)
 		currentDictionary := buildDictionary(string(baseDic), blockIndex)
-		currentOut := encryption_oracle_ECB(base)g
+		currentOut := encryption_oracle_ECB(base)
 		target := string(currentOut[blockIndex : blockIndex+blockSize])
 		decryptedByte := currentDictionary[target]
 		decryptedLetters = append(decryptedLetters, []byte(decryptedByte)...)
-		fmt.Printf("THE LETTER IS: %s \n", decryptedByte)
+		//fmt.Printf("THE LETTER IS: %s \n", decryptedByte)
 	}
+	fmt.Printf("The entire text is:\n-------------\n%s\n-------------\n", string(decryptedLetters))
 
 }
 
@@ -167,6 +168,7 @@ func main() {
 		println(len(bytesTest))
 		fmt.Printf("Result encryption test1: \n%q\n", encryptedTest)
 	}
+	// The decryption
 	println("-----------------Let's try this--------------------\n")
 	byteByByteDecryption()
 
