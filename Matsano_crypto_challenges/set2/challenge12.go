@@ -142,11 +142,11 @@ func byteByByteDecryption() {
 		baseSize := (blockSize - 1) - (decryptedBytes % blockSize)
 		blockNumber := decryptedBytes / blockSize
 		blockIndex := blockNumber * blockSize
-		baseCopy := bytes.Repeat([]byte("A"), baseSize)
-		base := bytes.Repeat([]byte("A"), baseSize)
-		base = append(base, decryptedLetters...)
-		currentDictionary := buildDictionary(string(base), blockIndex)
-		currentOut := encryption_oracle_ECB(baseCopy)
+		base := bytes.Repeat([]byte("A"), baseSize)    // This remains unmuted to decrypt
+		baseDic := bytes.Repeat([]byte("A"), baseSize) // This one needs the decrypted bytes to build the dictionary
+		baseDic = append(baseDic, decryptedLetters...)
+		currentDictionary := buildDictionary(string(baseDic), blockIndex)
+		currentOut := encryption_oracle_ECB(base)g
 		target := string(currentOut[blockIndex : blockIndex+blockSize])
 		decryptedByte := currentDictionary[target]
 		decryptedLetters = append(decryptedLetters, []byte(decryptedByte)...)
