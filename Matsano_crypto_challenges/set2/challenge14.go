@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	mrand "math/rand"
+	"slices"
 )
 
 func decryptECB(key string, bytes []byte) string {
@@ -127,6 +128,7 @@ func init() {
 	stableKey = make([]byte, 16)
 	rand.Read(stableKey)
 	prefixSize = mrand.Intn(128)
+	println(prefixSize)
 }
 
 func buildDictionary(base string, blockStartIndex int) map[string]string {
@@ -165,7 +167,7 @@ func byteByByteDecryption(initialIndex int) {
 
 func main() {
 	// This detection depends on Chosen Plaintext Attack (CPA)
-	twoBlock := make([]byte, 48) //48 bytes
+	twoBlock := make([]byte, (3*blockSize)-1) //47 bytes(enought to fill 2 blocks but not 3 in worst case nearly empty block)
 	output := encryption_oracle_ECB([]byte(twoBlock))
 	set := make(map[string]int)
 	var initialIndex int
@@ -181,6 +183,31 @@ func main() {
 		} else {
 			set[current] = i
 		}
+	}
+
+	// Figure out where to start
+	// Given that the prefix may end not on a full block.
+	repeatedBlocksEnd := initialIndex + 2*blockSize
+	var attackStart int
+	for i := 0; i < 17; i++ {
+		twoBlock := make([]byte, ((3*blockSize)-1)-i) //47 bytes(enought to fill 2 blocks but not 3 in worst case nearly empty block)
+		currentOutput := encryption_oracle_ECB([]byte(twoBlock))
+		if slices.Equal(currentOutput[initialIndex:initialIndex+blockSize], currentOutput[repeatedBlocksEnd-blockSize:repeatedBlocksEnd]) {
+			println("OK till: ")
+			fmt.Printf("%d\n", i)
+			println(string(currentOutput[initialIndex : initialIndex+blockSize]))
+			println(string(currentOutput[repeatedBlocksEnd-blockSize : repeatedBlocksEnd]))
+		} else {
+			println("NOTTTTTT OK in: ")
+			fmt.Printf("%d\n", i)
+			fmt.Printf("LENGTH IS %d\n", ((3*blockSize)-1)-i)
+			println(string(currentOutput[initialIndex : initialIndex+blockSize]))
+			println(string(currentOutput[repeatedBlocksEnd-blockSize : repeatedBlocksEnd]))
+			attackStart = ((3 * blockSize) - 1) - i + 1
+			fmt.Printf("The length you should use is %d\n", attackStart)
+			break
+		}
+
 	}
 
 	println("-----------------Let's try this--------------------\n")
