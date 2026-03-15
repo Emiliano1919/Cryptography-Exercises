@@ -158,6 +158,11 @@ func byteByByteDecryption(initialIndex int, additionalBase int) {
 		baseDic = append(baseDic, decryptedLetters...)
 		currentDictionary := buildDictionary(string(baseDic), blockIndex)
 		currentOut := encryption_oracle_ECB(base)
+		if blockIndex+blockSize > len(currentOut) {
+			// This if acts as a measure against out of bound errors caused
+			// by the fact that we do not know the size of the prefix
+			break
+		}
 		target := string(currentOut[blockIndex : blockIndex+blockSize])
 		decryptedByte := currentDictionary[target]
 		decryptedLetters = append(decryptedLetters, []byte(decryptedByte)...)
