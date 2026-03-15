@@ -144,11 +144,13 @@ func buildDictionary(base string, blockStartIndex int) map[string]string {
 	return dictionary
 }
 
-func byteByByteDecryption(initialIndex int) {
+func byteByByteDecryption(initialIndex int, additionalBase int) {
 	var decryptedLetters []byte
 	size := encryption_oracle_ECB(nil)
+	fmt.Printf("The length is:\n-------------\n%d\n-------------\n", len(size))
 	for decryptedBytes := 0; decryptedBytes < len(size); decryptedBytes++ {
 		baseSize := (blockSize - 1) - (decryptedBytes % blockSize)
+		baseSize += additionalBase
 		blockNumber := decryptedBytes / blockSize
 		blockIndex := (blockNumber * blockSize) + initialIndex
 		base := bytes.Repeat([]byte("A"), baseSize)    // This remains unmuted to decrypt
@@ -188,7 +190,7 @@ func main() {
 	// Figure out where to start
 	// Given that the prefix may end not on a full block.
 	repeatedBlocksEnd := initialIndex + 2*blockSize
-	var attackStart int
+	var attackBaseLength int
 	for i := 0; i < 17; i++ {
 		twoBlock := make([]byte, ((3*blockSize)-1)-i) //47 bytes(enought to fill 2 blocks but not 3 in worst case nearly empty block)
 		currentOutput := encryption_oracle_ECB([]byte(twoBlock))
@@ -203,17 +205,19 @@ func main() {
 			fmt.Printf("LENGTH IS %d\n", ((3*blockSize)-1)-i)
 			println(string(currentOutput[initialIndex : initialIndex+blockSize]))
 			println(string(currentOutput[repeatedBlocksEnd-blockSize : repeatedBlocksEnd]))
-			attackStart = ((3 * blockSize) - 1) - i + 1
-			fmt.Printf("The length you should use is %d\n", attackStart)
+			attackBaseLength = ((3 * blockSize) - 1) - i + 1
+			fmt.Printf("The length you should use is %d\n", attackBaseLength)
 			break
 		}
 
 	}
 
 	println("-----------------Let's try this--------------------\n")
-	println(initialIndex)
+
+	attackStartIndex := initialIndex + 2*blockSize
+	println(attackStartIndex)
 	// The problem here is that the initial index is not well calculated because it might be in the middle of a block
 
-	byteByByteDecryption(initialIndex)
+	byteByByteDecryption(attackStartIndex, attackBaseLength)
 
 }
