@@ -117,16 +117,6 @@ func isECB(cipher []byte) {
 const blockSize = 16 // The block size for AES
 
 var stableKey []byte
-var alphabet = []byte{
-	'A', 'B', 'C', 'D', 'E', 'F', 'G',
-	'H', 'I', 'J', 'K', 'L', 'M', 'N',
-	'O', 'P', 'Q', 'R', 'S', 'T',
-	'U', 'V', 'W', 'X', 'Y', 'Z',
-	'a', 'b', 'c', 'd', 'e', 'f', 'g',
-	'h', 'i', 'j', 'k', 'l', 'm', 'n',
-	'o', 'p', 'q', 'r', 's', 't',
-	'u', 'v', 'w', 'x', 'y', 'z',
-}
 
 func init() {
 	stableKey = make([]byte, 16)
@@ -134,8 +124,10 @@ func init() {
 }
 func buildDictionary(base string, blockStartIndex int) map[string]string {
 	dictionary := make(map[string]string)
-	for _, l := range alphabet {
+	// Full 256 ASCII
+	for l := 0; l < 256; l++ {
 		lbase := base + string(l)
+		println(lbase)
 		out := encryption_oracle_ECB([]byte(lbase))
 		block := string(out[blockStartIndex : blockSize+blockStartIndex])
 		dictionary[block] = string(l)
@@ -144,17 +136,21 @@ func buildDictionary(base string, blockStartIndex int) map[string]string {
 }
 
 func byteByByteDecryption() {
+	var decryptedLetters []byte
 	size := encryption_oracle_ECB(nil)
-	decryptedBytes := 0
-	for decryptedBytes < len(size) {
-		baseSize := decryptedBytes % (blockSize - 1)
+	for decryptedBytes := 0; decryptedBytes < len(size); decryptedBytes++ {
+		baseSize := (blockSize - 1) - (decryptedBytes % blockSize)
 		blockNumber := decryptedBytes / blockSize
 		blockIndex := blockNumber * blockSize
-		base := string(make([]byte, baseSize))
-		currentDictionary := buildDictionary(base, blockIndex)
-		currentOut := encryption_oracle_ECB([]byte(base))
-		fmt.Print(currentDictionary[string(currentOut[blockIndex:blockIndex+blockSize])])
-		decryptedBytes++
+		baseCopy := bytes.Repeat([]byte("A"), baseSize)
+		base := bytes.Repeat([]byte("A"), baseSize)
+		base = append(base, decryptedLetters...)
+		currentDictionary := buildDictionary(string(base), blockIndex)
+		currentOut := encryption_oracle_ECB(baseCopy)
+		target := string(currentOut[blockIndex : blockIndex+blockSize])
+		decryptedByte := currentDictionary[target]
+		decryptedLetters = append(decryptedLetters, []byte(decryptedByte)...)
+		fmt.Printf("THE LETTER IS: %s \n", decryptedByte)
 	}
 
 }
