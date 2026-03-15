@@ -85,10 +85,16 @@ func randomKey16Bytes() []byte {
 }
 
 func encryption_oracle_ECB(plaintext []byte) []byte {
+	var lastB64 []byte
+	const lastPlain = `Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg
+aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq
+dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg
+YnkK`
+	lastB64, _ = base64.StdEncoding.DecodeString(lastPlain)
+	lastBytes := []byte(lastB64)
 	prefix := make([]byte, prefixSize)
 	rand.Read(prefix)
 	plaintext = append(prefix, plaintext...)
-	lastBytes := []byte(lastB64)
 	plaintext = append(plaintext, lastBytes...)
 	plaintext = padByteToNextMultipleOf(plaintext, 16)
 	return []byte(encryptECB(stableKey, plaintext))
@@ -113,31 +119,48 @@ func isECB(cipher []byte) {
 	}
 }
 
-const blockSize = 16 // The block size for AES (We find the size using techniques from previous challenges but I skip it for this problem)
-var lastB64 []byte
+const blockSize = 16 // The block size for AES
 var prefixSize int
 var stableKey []byte
-var alphabet = []byte{
-	'A', 'B', 'C', 'D', 'E', 'F', 'G',
-	'H', 'I', 'J', 'K', 'L', 'M', 'N',
-	'O', 'P', 'Q', 'R', 'S', 'T',
-	'U', 'V', 'W', 'X', 'Y', 'Z',
-	'a', 'b', 'c', 'd', 'e', 'f', 'g',
-	'h', 'i', 'j', 'k', 'l', 'm', 'n',
-	'o', 'p', 'q', 'r', 's', 't',
-	'u', 'v', 'w', 'x', 'y', 'z',
-}
-
-const lastPlain = `Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg
-aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq
-dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg
-YnkK`
 
 func init() {
 	stableKey = make([]byte, 16)
 	rand.Read(stableKey)
-	lastB64, _ = base64.StdEncoding.DecodeString(lastPlain)
 	prefixSize = mrand.Intn(128)
+}
+
+func buildDictionary(base string, blockStartIndex int) map[string]string {
+	dictionary := make(map[string]string)
+	// Full 256 ASCII
+	for l := 0; l < 256; l++ {
+		lbase := base + string(l)
+		//println(lbase)
+		out := encryption_oracle_ECB([]byte(lbase))
+		block := string(out[blockStartIndex : blockSize+blockStartIndex])
+		dictionary[block] = string(l)
+	}
+	return dictionary
+}
+
+func byteByByteDecryption(initialIndex int) {
+	var decryptedLetters []byte
+	size := encryption_oracle_ECB(nil)
+	for decryptedBytes := 0; decryptedBytes < len(size); decryptedBytes++ {
+		baseSize := (blockSize - 1) - (decryptedBytes % blockSize)
+		blockNumber := decryptedBytes / blockSize
+		blockIndex := (blockNumber * blockSize) + initialIndex
+		base := bytes.Repeat([]byte("A"), baseSize)    // This remains unmuted to decrypt
+		baseDic := bytes.Repeat([]byte("A"), baseSize) // This one needs the decrypted bytes to build the dictionary
+		baseDic = append(baseDic, decryptedLetters...)
+		currentDictionary := buildDictionary(string(baseDic), blockIndex)
+		currentOut := encryption_oracle_ECB(base)
+		target := string(currentOut[blockIndex : blockIndex+blockSize])
+		decryptedByte := currentDictionary[target]
+		decryptedLetters = append(decryptedLetters, []byte(decryptedByte)...)
+		fmt.Printf("THE LETTER IS: %s \n", decryptedByte)
+	}
+	fmt.Printf("The entire text is:\n-------------\n%s\n-------------\n", string(decryptedLetters))
+
 }
 
 func main() {
@@ -146,6 +169,7 @@ func main() {
 	output := encryption_oracle_ECB([]byte(twoBlock))
 	set := make(map[string]int)
 	var initialIndex int
+	// We first create enough repetition to fill at least 2 blocks to find the starting point of our Chosen plaintext
 	for i := 0; i < len(output); i += blockSize {
 		current := string(output[i : i+blockSize])
 		println(i)
@@ -153,27 +177,16 @@ func main() {
 		if initial, exists := set[current]; exists {
 			fmt.Println("ECB mode here")
 			fmt.Printf("Starting index is: %d \n", initial)
-			initialIndex = initial
+			initialIndex = initial // We find the index
 		} else {
 			set[current] = i
 		}
 	}
 
-	base := string(make([]byte, 15)) //15 so 15 bytes as base to build dictionary
-	dictionary := make(map[string]string)
+	println("-----------------Let's try this--------------------\n")
+	println(initialIndex)
+	// The problem here is that the initial index is not well calculated because it might be in the middle of a block
 
-	for _, l := range alphabet {
-		lbase := base + string(l)
-		out := encryption_oracle_ECB([]byte(lbase))
-		block := string(out[initialIndex : initialIndex+blockSize])
-		dictionary[block] = string(l)
-	}
-
-	println("\n-------Same result?----------\n")
-	for _, x := range lastB64 {
-		xbase := base + string(x)
-		out := encryption_oracle_ECB([]byte(xbase))
-		fmt.Print(dictionary[string(out[initialIndex:initialIndex+blockSize])])
-	}
+	byteByByteDecryption(initialIndex)
 
 }
