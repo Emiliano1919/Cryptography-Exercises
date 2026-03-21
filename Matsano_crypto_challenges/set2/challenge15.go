@@ -2,8 +2,11 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 )
+
+const PaddingError = errors.New("Incorrect Padding")
 
 func padByteVersion(plaintext []byte, size int) []byte {
 	padding := size - len([]byte(plaintext))
@@ -33,7 +36,11 @@ func padByteToNextMultipleOf(plaintext []byte, multipleOf int) []byte {
 	return result
 }
 
-func isValidPadding(paddedText []byte) bool{
+func isValidPaddingMultipleOf(paddedText []byte, multipleOf int) error {
+	currentSize := len(paddedText)
+	if currentSize%multipleOf != 0 {
+		return PaddingError
+	} 
 	
 }
 
