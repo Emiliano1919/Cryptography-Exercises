@@ -32,7 +32,7 @@ func padStringVersion(plaintext string, size int) string {
 
 	return plaintext
 }
-func padByteToNext(plaintext []byte, blockSize int) []byte {
+func pad(plaintext []byte, blockSize int) []byte {
 	cSize := len(plaintext)
 	remainder := cSize % blockSize
 	var result []byte
@@ -60,7 +60,7 @@ func padByteToNext(plaintext []byte, blockSize int) []byte {
 // 		withoutPadding := make([]byte, first)
 // 		copy(withoutPadding, paddedText[:first])
 // 		fmt.Printf("Result without padding Version: %q\n", withoutPadding)
-// 		generatedPadding := padByteToNext(withoutPadding, blockSize)
+// 		generatedPadding := pad(withoutPadding, blockSize)
 // 		fmt.Printf("Result Generated Version: %q\n", generatedPadding)
 // 		fmt.Printf("Result Original Version: %q\n", paddedText)
 // 		if bytes.Equal(generatedPadding, paddedText) {
@@ -111,7 +111,7 @@ func main() {
 		println("New1 kapput")
 		log.Println(err)
 	}
-	new2 := padByteToNext([]byte(test), 16)
+	new2 := pad([]byte(test), 16)
 
 	fmt.Printf("Result Byte Version: %q\n", new2)
 	fmt.Printf("Result Byte Size: %d\n", len(new2))

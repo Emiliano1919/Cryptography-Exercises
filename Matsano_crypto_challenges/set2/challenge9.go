@@ -20,7 +20,7 @@ func padStringVersion(plaintext string, size int) string {
 
 	return plaintext
 }
-func padByteToNext(plaintext []byte, blockSize int) []byte {
+func pad(plaintext []byte, blockSize int) []byte {
 	cSize := len(plaintext)
 	remainder := cSize % blockSize
 	var result []byte
