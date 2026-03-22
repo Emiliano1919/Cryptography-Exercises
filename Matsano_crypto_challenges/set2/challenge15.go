@@ -37,6 +37,7 @@ func padByteToNext(plaintext []byte, blockSize int) []byte {
 	remainder := cSize % blockSize
 	var result []byte
 	if remainder == 0 { //Edge case add a whole other block
+		// Useful info: https://crypto.stackexchange.com/questions/78187/how-do-i-find-out-whether-a-message-in-cbc-has-padding/80481#80481
 		result = padByteVersion(plaintext, cSize+blockSize)
 	} else {
 		nextSize := blockSize - remainder + cSize
