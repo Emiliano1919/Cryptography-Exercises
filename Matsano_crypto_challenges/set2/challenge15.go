@@ -75,7 +75,6 @@ func pad(plaintext []byte, blockSize int) []byte {
 // }
 
 func isValidPadding(paddedText []byte, blockSize int) ([]byte, error) {
-	fmt.Printf("\nResult input Version: %q\n", paddedText)
 	cSize := len(paddedText)
 	pSize := int(paddedText[len(paddedText)-1])
 	if len(paddedText) == 0 || pSize == 0 {
