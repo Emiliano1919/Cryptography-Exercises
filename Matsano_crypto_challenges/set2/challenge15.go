@@ -74,24 +74,33 @@ func pad(plaintext []byte, blockSize int) []byte {
 // 	}
 // }
 
-func isValidPadding(paddedText []byte, blockSize int) error {
+func isValidPadding(paddedText []byte, blockSize int) ([]byte, error) {
 	fmt.Printf("\nResult input Version: %q\n", paddedText)
 	cSize := len(paddedText)
-	paddingSize := int(paddedText[len(paddedText)-1])
-	if len(paddedText) == 0 || paddingSize == 0 {
-		return ErrVoid
+	pSize := int(paddedText[len(paddedText)-1])
+	if len(paddedText) == 0 || pSize == 0 {
+		return nil, ErrVoid
 	}
-	if cSize%blockSize != 0 || (paddingSize > blockSize) {
-		return ErrPaddingSize
+	if cSize%blockSize != 0 || (pSize > blockSize) {
+		return nil, ErrPaddingSize
 	}
 
-	for i := 0; i < paddingSize; i++ {
-		if paddedText[cSize-i-1] != byte(paddingSize) {
-			return ErrPadding
+	for i := 0; i < pSize; i++ {
+		if paddedText[cSize-i-1] != byte(pSize) {
+			return nil, ErrPadding
 		}
 	}
-	return nil
+	return paddedText[:cSize-pSize], nil
+}
 
+func testCase(name string, data []byte) {
+	val, err := isValidPadding(data, 16)
+	if err != nil {
+		println(name, "kapput")
+		log.Println(err)
+	} else {
+		fmt.Printf("%s OK: %q\n", name, val)
+	}
 }
 
 func main() {
@@ -100,41 +109,11 @@ func main() {
 	test2 := []byte("ICE ICE BABY\x04\x04\x04\x04")
 	test3 := []byte("ICE ICE BABY\x05\x05\x05\x05")
 	test4 := []byte("ICE ICE BABY\x01\x02\x03\x04")
-
 	new1 := padByteVersion([]byte(test), 20)
-
-	fmt.Printf("Result Byte Version: %q\n", new1)
-	fmt.Printf("Result Byte Size: %d\n", len(new1))
-
-	err := isValidPadding([]byte(new1), 16)
-	if err != nil {
-		println("New1 kapput")
-		log.Println(err)
-	}
 	new2 := pad([]byte(test), 16)
-
-	fmt.Printf("Result Byte Version: %q\n", new2)
-	fmt.Printf("Result Byte Size: %d\n", len(new2))
-	err2 := isValidPadding(new2, 16)
-	if err2 != nil {
-		println("New2 kapput")
-		log.Println(err2)
-	}
-
-	err3 := isValidPadding(test2, 16)
-	if err3 != nil {
-		println("Test2 kapput")
-		log.Println(err3)
-	}
-	err4 := isValidPadding(test3, 16)
-	if err4 != nil {
-
-		println("Test3 kapput")
-		log.Println(err4)
-	}
-	err5 := isValidPadding(test4, 16)
-	if err5 != nil {
-		println("Test4 kapput")
-		log.Println(err5)
-	}
+	testCase("New1", new1)
+	testCase("New2", new2)
+	testCase("Test2", test2)
+	testCase("Test3", test3)
+	testCase("Test4", test4)
 }
