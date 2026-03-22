@@ -7,9 +7,9 @@ import (
 	"log"
 )
 
-var PaddingSizeError = errors.New("Incorrect Padding Size")
-var PaddingError = errors.New("Incorrect Padding")
-var MultiplicityError = errors.New("Multiplicity above 32")
+var ErrPaddingSize = errors.New("Incorrect Padding Size")
+var ErrPadding = errors.New("Incorrect Padding")
+var ErrVoid = errors.New("Incorrect empty text")
 
 const UnprintableASCII = "" +
 	"\x00\x01\x02\x03\x04\x05\x06\x07" +
@@ -32,49 +32,70 @@ func padStringVersion(plaintext string, size int) string {
 
 	return plaintext
 }
-func padByteToNextMultipleOf(plaintext []byte, multipleOf int) []byte {
-	currentSize := len(plaintext)
-	remainder := currentSize % multipleOf
+func padByteToNext(plaintext []byte, blockSize int) []byte {
+	cSize := len(plaintext)
+	remainder := cSize % blockSize
 	var result []byte
-	if remainder == 0 {
-		result = padByteVersion(plaintext, currentSize)
+	if remainder == 0 { //Edge case add a whole other block
+		result = padByteVersion(plaintext, cSize+blockSize)
 	} else {
-		nextSize := multipleOf - remainder + currentSize
+		nextSize := blockSize - remainder + cSize
 		result = padByteVersion(plaintext, nextSize)
 	}
 	return result
 }
 
-func isValidPaddingMultipleOf(paddedText []byte, multipleOf int) error {
-	fmt.Printf("\nResult input Version: %q\n", paddedText)
-	if multipleOf > 32 {
-		return MultiplicityError
-	}
-	currentSize := len(paddedText)
-	if currentSize%multipleOf != 0 {
-		return PaddingSizeError
-	}
-	if bytes.ContainsAny(paddedText, UnprintableASCII) {
-		first := bytes.IndexAny(paddedText, UnprintableASCII)
-		withoutPadding := make([]byte, first)
-		copy(withoutPadding, paddedText[:first])
-		fmt.Printf("Result without padding Version: %q\n", withoutPadding)
-		generatedPadding := padByteToNextMultipleOf(withoutPadding, multipleOf)
-		fmt.Printf("Result Generated Version: %q\n", generatedPadding)
-		fmt.Printf("Result Original Version: %q\n", paddedText)
-		if bytes.Equal(generatedPadding, paddedText) {
-			return nil
-		} else {
-			return PaddingError
-		}
+// func isValidPadding(paddedText []byte, blockSize int) error {
+// 	fmt.Printf("\nResult input Version: %q\n", paddedText)
+// 	if blockSize > 32 {
+// 		return MultiplicityError
+// 	}
+// 	cSize := len(paddedText)
+// 	if cSize%blockSize != 0 {
+// 		return PaddingSizeError
+// 	}
+// 	if bytes.ContainsAny(paddedText, UnprintableASCII) {
+// 		first := bytes.IndexAny(paddedText, UnprintableASCII)
+// 		withoutPadding := make([]byte, first)
+// 		copy(withoutPadding, paddedText[:first])
+// 		fmt.Printf("Result without padding Version: %q\n", withoutPadding)
+// 		generatedPadding := padByteToNext(withoutPadding, blockSize)
+// 		fmt.Printf("Result Generated Version: %q\n", generatedPadding)
+// 		fmt.Printf("Result Original Version: %q\n", paddedText)
+// 		if bytes.Equal(generatedPadding, paddedText) {
+// 			return nil
+// 		} else {
+// 			return PaddingError
+// 		}
 
-	} else {
-		return nil
+// 	} else {
+// 		return nil
+// 	}
+// }
+
+func isValidPadding(paddedText []byte, blockSize int) error {
+	fmt.Printf("\nResult input Version: %q\n", paddedText)
+	cSize := len(paddedText)
+	paddingSize := int(paddedText[len(paddedText)-1])
+	if len(paddedText) == 0 || paddingSize == 0 {
+		return ErrVoid
 	}
+	if cSize%blockSize != 0 || (paddingSize > blockSize) {
+		return ErrPaddingSize
+	}
+
+	for i := 0; i < paddingSize; i++ {
+		if paddedText[cSize-i-1] != byte(paddingSize) {
+			return ErrPadding
+		}
+	}
+	return nil
+
 }
 
 func main() {
 	test := "YELLOW SUBMARINE"
+	fmt.Printf("Result Byte Size: %d\n", len(test))
 	test2 := []byte("ICE ICE BABY\x04\x04\x04\x04")
 	test3 := []byte("ICE ICE BABY\x05\x05\x05\x05")
 	test4 := []byte("ICE ICE BABY\x01\x02\x03\x04")
@@ -84,33 +105,33 @@ func main() {
 	fmt.Printf("Result Byte Version: %q\n", new1)
 	fmt.Printf("Result Byte Size: %d\n", len(new1))
 
-	err := isValidPaddingMultipleOf([]byte(new1), 16)
+	err := isValidPadding([]byte(new1), 16)
 	if err != nil {
 		println("New1 kapput")
 		log.Println(err)
 	}
-	new2 := padByteToNextMultipleOf([]byte(test), 16)
+	new2 := padByteToNext([]byte(test), 16)
 
 	fmt.Printf("Result Byte Version: %q\n", new2)
 	fmt.Printf("Result Byte Size: %d\n", len(new2))
-	err2 := isValidPaddingMultipleOf(new2, 16)
+	err2 := isValidPadding(new2, 16)
 	if err2 != nil {
 		println("New2 kapput")
 		log.Println(err2)
 	}
 
-	err3 := isValidPaddingMultipleOf(test2, 16)
+	err3 := isValidPadding(test2, 16)
 	if err3 != nil {
 		println("Test2 kapput")
 		log.Println(err3)
 	}
-	err4 := isValidPaddingMultipleOf(test3, 16)
+	err4 := isValidPadding(test3, 16)
 	if err4 != nil {
 
 		println("Test3 kapput")
 		log.Println(err4)
 	}
-	err5 := isValidPaddingMultipleOf(test4, 16)
+	err5 := isValidPadding(test4, 16)
 	if err5 != nil {
 		println("Test4 kapput")
 		log.Println(err5)
