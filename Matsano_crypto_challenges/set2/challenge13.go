@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 )
 
@@ -21,6 +20,24 @@ func parsingRoutine(s string) ([]byte, error) {
 		return nil, err
 	}
 	return jsonOut, nil
+}
+
+func profile_for(s string) ([]byte, string, error) {
+	email := regexp.QuoteMeta(s) // Escape any special character
+	uid := users
+	users++
+	role := "user"
+	stringOut := fmt.Sprintf("email=%s&uid=%d&role=%s", email, uid, role)
+	dat := map[string]interface{}{
+		"email": email,
+		"uid":   uid,
+		"role":  role,
+	}
+	jsonOut, err := json.Marshal(dat)
+	if err != nil {
+		return nil, "", err
+	}
+	return jsonOut, stringOut, nil
 }
 
 func main() {
