@@ -120,12 +120,12 @@ func main() {
 	if err != nil {
 		log.Println(err)
 	}
-	println(string(cipher))
+	fmt.Printf("%s\n", cipher)
 	plain := decryptECB(string(stableKey), cipher)
 	plainPar, err := parsingRoutine(string(plain))
 	if err != nil {
 		log.Println(err)
 	}
-	println(string(plainPar))
+	fmt.Printf("%s\n", plainPar)
 
 }
