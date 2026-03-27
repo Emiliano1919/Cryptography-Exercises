@@ -1,7 +1,12 @@
 package main
 
 import (
+	"crypto/aes"
+	"crypto/rand"
 	"encoding/json"
+	"fmt"
+	"log"
+	"regexp"
 	"strings"
 )
 
@@ -38,6 +43,33 @@ func profile_for(s string) ([]byte, string, error) {
 		return nil, "", err
 	}
 	return jsonOut, stringOut, nil
+}
+
+func init() {
+	stableKey = make([]byte, 16)
+	rand.Read(stableKey)
+}
+
+func encryptECB(key []byte, bytes []byte) []byte {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		log.Fatal(err)
+	}
+	result := make([]byte, len(bytes))
+	blockSize := block.BlockSize() // 16 bytes at a time
+	for i := 0; i < len(bytes); i += blockSize {
+		block.Encrypt(result[i:i+blockSize], bytes[i:i+blockSize]) // We have to encrypt it 16 bytes at a time
+	}
+	return result
+}
+
+func encrypted_profile_for(s string) ([]byte, error) {
+	jsonOut, _, err := profile_for(s)
+	if err != nil {
+		return nil, err
+	} else {
+		return encryptECB(string(stableKey), jsonOut), nil
+	}
 }
 
 func main() {
