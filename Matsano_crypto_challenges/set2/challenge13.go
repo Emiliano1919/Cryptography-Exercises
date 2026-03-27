@@ -64,11 +64,11 @@ func encryptECB(key []byte, bytes []byte) []byte {
 }
 
 func encrypted_profile_for(s string) ([]byte, error) {
-	jsonOut, _, err := profile_for(s)
+	_, stringOut, err := profile_for(s)
 	if err != nil {
 		return nil, err
 	} else {
-		return encryptECB(string(stableKey), jsonOut), nil
+		return encryptECB(string(stableKey), []byte(stringOut)), nil
 	}
 }
 
