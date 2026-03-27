@@ -45,14 +45,14 @@ func padByteVersion(plaintext []byte, size int) []byte {
 	return append(plaintext, bpad...)
 }
 
-func padByteToNextMultipleOf(plaintext []byte, multipleOf int) []byte {
+func padByteToNextblockSize(plaintext []byte, blockSize int) []byte {
 	currentSize := len(plaintext)
-	remainder := currentSize % multipleOf
+	remainder := currentSize % blockSize
 	var result []byte
 	if remainder == 0 {
 		result = padByteVersion(plaintext, currentSize)
 	} else {
-		nextSize := multipleOf - remainder + currentSize
+		nextSize := blockSize - remainder + currentSize
 		result = padByteVersion(plaintext, nextSize)
 	}
 	return result
@@ -122,7 +122,7 @@ func main() {
 	iv := make([]byte, 16)
 	test := "QUE CLASE de perro es este? Un perritoooooo :)"
 	bytesTest := []byte(test)
-	paddedByteTest := padByteToNextMultipleOf(bytesTest, 16) // We need to pad it to an acceptable length multiple of 16
+	paddedByteTest := padByteToNextblockSize(bytesTest, 16) // We need to pad it to an acceptable length multiple of 16
 	fmt.Printf("Result padding plaintext test: %q\n", paddedByteTest)
 	encryptedTest := encryptCBC(iv, key, paddedByteTest)
 	fmt.Printf("Result encryption test: %q\n", encryptedTest)

@@ -43,14 +43,14 @@ func padByteVersion(plaintext []byte, size int) []byte {
 	return append(plaintext, bpad...)
 }
 
-func padByteToNextMultipleOf(plaintext []byte, multipleOf int) []byte {
+func padByteToNextblockSize(plaintext []byte, blockSize int) []byte {
 	currentSize := len(plaintext)
-	remainder := currentSize % multipleOf
+	remainder := currentSize % blockSize
 	var result []byte
 	if remainder == 0 {
 		result = padByteVersion(plaintext, currentSize)
 	} else {
-		nextSize := multipleOf - remainder + currentSize
+		nextSize := blockSize - remainder + currentSize
 		result = padByteVersion(plaintext, nextSize)
 	}
 	return result
@@ -92,7 +92,7 @@ YnkK`
 	lastB64, _ = base64.StdEncoding.DecodeString(lastPlain)
 	lastBytes := []byte(lastB64)
 	plaintext = append(plaintext, lastBytes...)
-	plaintext = padByteToNextMultipleOf(plaintext, 16)
+	plaintext = padByteToNextblockSize(plaintext, 16)
 	return []byte(encryptECB(stableKey, plaintext))
 }
 func counterOfRepeat(cipher []byte) int {
