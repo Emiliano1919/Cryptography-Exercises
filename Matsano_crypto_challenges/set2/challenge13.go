@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/rand"
 	"encoding/json"
@@ -9,6 +10,11 @@ import (
 	"regexp"
 	"strings"
 )
+
+var users int = 0
+var stableKey []byte
+
+const blockSize int = 16
 
 func parsingRoutine(s string) ([]byte, error) {
 	dat := make(map[string]interface{}) // Initialize to be able to address
@@ -63,15 +69,63 @@ func encryptECB(key []byte, bytes []byte) []byte {
 	return result
 }
 
+func decryptECB(key string, bytes []byte) string {
+	keyBytes := []byte(key)
+	block, err := aes.NewCipher(keyBytes)
+	if err != nil {
+		log.Fatal(err)
+	}
+	result := make([]byte, len(bytes))
+	blockSize := block.BlockSize() // 16 bytes at a time
+	for i := 0; i < len(bytes); i += blockSize {
+		block.Decrypt(result[i:i+blockSize], bytes[i:i+blockSize]) // We have to Decrypt it 16 bytes at a time
+	}
+	return string(result)
+}
+
 func encrypted_profile_for(s string) ([]byte, error) {
 	_, stringOut, err := profile_for(s)
+	stringOut = string(padByteToNextblockSize([]byte(stringOut), blockSize))
 	if err != nil {
 		return nil, err
 	} else {
-		return encryptECB(string(stableKey), []byte(stringOut)), nil
+		return encryptECB(stableKey, []byte(stringOut)), nil
 	}
 }
 
+func padByteVersion(plaintext []byte, size int) []byte {
+	padding := size - len([]byte(plaintext))
+
+	bpad := bytes.Repeat([]byte{byte(padding)}, padding)
+
+	return append(plaintext, bpad...)
+}
+
+func padByteToNextblockSize(plaintext []byte, blockSize int) []byte {
+	currentSize := len(plaintext)
+	remainder := currentSize % blockSize
+	var result []byte
+	if remainder == 0 {
+		result = padByteVersion(plaintext, currentSize)
+	} else {
+		nextSize := blockSize - remainder + currentSize
+		result = padByteVersion(plaintext, nextSize)
+	}
+	return result
+}
+
 func main() {
+	test := "DOG@doggy.com"
+	cipher, err := encrypted_profile_for(string(test))
+	if err != nil {
+		log.Println(err)
+	}
+	println(string(cipher))
+	plain := decryptECB(string(stableKey), cipher)
+	plainPar, err := parsingRoutine(string(plain))
+	if err != nil {
+		log.Println(err)
+	}
+	println(string(plainPar))
 
 }
