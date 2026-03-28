@@ -162,7 +162,7 @@ func main() {
 		log.Println(err)
 	}
 	adminPart = adminPart[2*blockSize : 3*blockSize]
-	FullInput = string(initialPart) + string(adminPart)
+	FullInput = string(initialPart) + string(adminPart) // This is the solution (We basically just grab each block individually assamble them and it is done)
 	// This part bellow is just for texting
 	DecryptedInput := decryptECB(string(stableKey), []byte(FullInput))
 	FinalOutput, err := parsingRoutine(DecryptedInput)
