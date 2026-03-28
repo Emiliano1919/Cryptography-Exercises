@@ -119,8 +119,9 @@ func tester(s string) {
 	if err != nil {
 		log.Println(err)
 	}
-	fmt.Printf("%s\n", cipher)
+	printByBlocks([]byte(cipher))
 	plain := decryptECB(string(stableKey), cipher)
+	printByBlocks([]byte(plain))
 	plainPar, err := parsingRoutine(string(plain))
 	if err != nil {
 		log.Println(err)
@@ -128,14 +129,27 @@ func tester(s string) {
 	fmt.Printf("%s\n", plainPar)
 }
 
+func printByBlocks(bytes []byte) {
+	println("\n------ START --------\n")
+	for i := 0; i < len(bytes); i += blockSize {
+		fmt.Printf("%q | ", bytes[i:i+blockSize])
+	}
+	println("\n------ END --------\n")
+}
+
 func main() {
-	test := "DOG@doggy.com&role=admin"
-	test2 := "OOOOOOOOOOOOOOOOOOOOOOrole=admin&role=admin"
-	test3 := "OOOOOOOOOOOOOOOOOOOOOooooooooooooooooooorole=admin&role=admin"
-	test4 := "OOOOOOOOOOOOOOOOOOOOOoooooooooooooooooooOOOOOOOOOOOOOOOOOOOOOooooooooooooooooooorole=admin&role=admin"
-	tests := []string{test, test2, test3, test4}
+	// You can calculate the amount of text needed by just calculating the characters
+	// But this program is more visual (For understanding)
+	filler := "DOG@doggy.com1234567893456" // Fills the first to blocks to get just admin and padding on the last one
+	admin := "admin"
+	adminPadded = padByteToNextblockSize([]byte(admin), blockSize) // We need to pad in the same way
+	admingBlockGetter += string(here)                              // We will get it on the 3rd block
+	initialPartGetter := "perro12345.com"                          // Get .com&uid=2&role= in a single block (2nd block)
+	tests := []string{admingBlockGetter, initialPartGetter}
 	for i, v := range tests {
 		fmt.Printf("\n----------Test %d -------------\n", i)
 		tester(v)
 	}
+	
+
 }
