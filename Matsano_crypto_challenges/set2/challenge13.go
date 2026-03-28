@@ -126,7 +126,7 @@ func tester(s string) {
 	if err != nil {
 		log.Println(err)
 	}
-	fmt.Printf("%s\n", plainPar)
+	fmt.Printf("Actual Output of Tester: %s\n-----------------------\n", plainPar)
 }
 
 func printByBlocks(bytes []byte) {
@@ -164,13 +164,12 @@ func main() {
 	adminPart = adminPart[2*blockSize : 3*blockSize]
 	FullInput = append(FullInput, initialPart...) // This is the solution (We basically just grab each block individually assamble them and it is done)
 	FullInput = append(FullInput, adminPart...)
-	// This part bellow is just for texting
+	// This part bellow is just for testing
 	DecryptedInput := decryptECB(string(stableKey), FullInput)
 	FinalOutput, err := parsingRoutine(DecryptedInput)
 	if err != nil {
 		log.Println(err)
 	}
-	println(FinalOutput)
-	DecryptedInput = decryptECB(string(stableKey), []byte(FullInput))
-	fmt.Printf(" %q", DecryptedInput)
+	fmt.Printf("This is the Frankestein cipher Output:  %s\n", FinalOutput)
+
 }
