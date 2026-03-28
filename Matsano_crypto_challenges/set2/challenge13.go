@@ -138,18 +138,36 @@ func printByBlocks(bytes []byte) {
 }
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile) // Very helpful ( I need to improve how I Wrap and display errors)
 	// You can calculate the amount of text needed by just calculating the characters
 	// But this program is more visual (For understanding)
-	filler := "DOG@doggy.com1234567893456" // Fills the first to blocks to get just admin and padding on the last one
+	admingBlockGetter := "DOG@doggy.com1234567893456" // Fills the first to blocks to get just admin and padding on the last one
 	admin := "admin"
-	adminPadded = padByteToNextblockSize([]byte(admin), blockSize) // We need to pad in the same way
-	admingBlockGetter += string(here)                              // We will get it on the 3rd block
-	initialPartGetter := "perro12345.com"                          // Get .com&uid=2&role= in a single block (2nd block)
+	adminPadded := padByteToNextblockSize([]byte(admin), blockSize) // We need to pad in the same way
+	admingBlockGetter += string(adminPadded)                        // We will get it on the 3rd block
+	initialPartGetter := "perro12345.com"                           // Get .com&uid=2&role= in a single block (2nd block)
 	tests := []string{admingBlockGetter, initialPartGetter}
 	for i, v := range tests {
 		fmt.Printf("\n----------Test %d -------------\n", i)
 		tester(v)
 	}
-	
-
+	var FullInput string
+	initialPart, err := encrypted_profile_for(initialPartGetter)
+	if err != nil {
+		log.Println(err)
+	}
+	initialPart = initialPart[0 : 2*blockSize]
+	adminPart, err := encrypted_profile_for(admingBlockGetter)
+	if err != nil {
+		log.Println(err)
+	}
+	adminPart = adminPart[2*blockSize : 3*blockSize]
+	FullInput = string(initialPart) + string(adminPart)
+	// This part bellow is just for texting
+	DecryptedInput := decryptECB(string(stableKey), []byte(FullInput))
+	FinalOutput, err := parsingRoutine(DecryptedInput)
+	if err != nil {
+		log.Println(err)
+	}
+	println(FinalOutput)
 }
