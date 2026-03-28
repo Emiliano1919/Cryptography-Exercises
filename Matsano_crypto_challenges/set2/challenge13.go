@@ -151,7 +151,7 @@ func main() {
 		fmt.Printf("\n----------Test %d -------------\n", i)
 		tester(v)
 	}
-	var FullInput string
+	var FullInput []byte
 	initialPart, err := encrypted_profile_for(initialPartGetter)
 	if err != nil {
 		log.Println(err)
@@ -162,12 +162,15 @@ func main() {
 		log.Println(err)
 	}
 	adminPart = adminPart[2*blockSize : 3*blockSize]
-	FullInput = string(initialPart) + string(adminPart) // This is the solution (We basically just grab each block individually assamble them and it is done)
+	FullInput = append(FullInput, initialPart...) // This is the solution (We basically just grab each block individually assamble them and it is done)
+	FullInput = append(FullInput, adminPart...)
 	// This part bellow is just for texting
-	DecryptedInput := decryptECB(string(stableKey), []byte(FullInput))
+	DecryptedInput := decryptECB(string(stableKey), FullInput)
 	FinalOutput, err := parsingRoutine(DecryptedInput)
 	if err != nil {
 		log.Println(err)
 	}
 	println(FinalOutput)
+	DecryptedInput = decryptECB(string(stableKey), []byte(FullInput))
+	fmt.Printf(" %q", DecryptedInput)
 }
