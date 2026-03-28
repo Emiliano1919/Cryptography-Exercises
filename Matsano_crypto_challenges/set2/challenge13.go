@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"regexp"
 	"strings"
 )
 
@@ -34,7 +33,8 @@ func parsingRoutine(s string) ([]byte, error) {
 }
 
 func profile_for(s string) ([]byte, string, error) {
-	email := regexp.QuoteMeta(s) // Escape any special character
+	email := strings.ReplaceAll(s, "&", "")
+	email = strings.ReplaceAll(email, "=", "")
 	uid := users
 	users++
 	role := "user"
@@ -114,9 +114,8 @@ func padByteToNextblockSize(plaintext []byte, blockSize int) []byte {
 	return result
 }
 
-func main() {
-	test := "DOG@doggy.com"
-	cipher, err := encrypted_profile_for(string(test))
+func tester(s string) {
+	cipher, err := encrypted_profile_for(string(s))
 	if err != nil {
 		log.Println(err)
 	}
@@ -127,5 +126,16 @@ func main() {
 		log.Println(err)
 	}
 	fmt.Printf("%s\n", plainPar)
+}
 
+func main() {
+	test := "DOG@doggy.com&role=admin"
+	test2 := "OOOOOOOOOOOOOOOOOOOOOOrole=admin&role=admin"
+	test3 := "OOOOOOOOOOOOOOOOOOOOOooooooooooooooooooorole=admin&role=admin"
+	test4 := "OOOOOOOOOOOOOOOOOOOOOoooooooooooooooooooOOOOOOOOOOOOOOOOOOOOOooooooooooooooooooorole=admin&role=admin"
+	tests := []string{test, test2, test3, test4}
+	for i, v := range tests {
+		fmt.Printf("\n----------Test %d -------------\n", i)
+		tester(v)
+	}
 }
