@@ -33,8 +33,8 @@ func parsingRoutine(s string) ([]byte, error) {
 }
 
 func inputFunction(s string) []byte {
-	strings.ReplaceAll(s, ";", `";"`)
-	strings.ReplaceAll(s, "=", `"="`)
+	s = strings.ReplaceAll(s, ";", "\\;")
+	s = strings.ReplaceAll(s, "=", "\\=")
 	prefix := `comment1=cooking%20MCs;userdata=`
 	suffix := `;comment2=%20like%20a%20pound%20of%20bacon`
 	completeMsg := padByteToNextblockSize([]byte(prefix+s+suffix), blockSize)
