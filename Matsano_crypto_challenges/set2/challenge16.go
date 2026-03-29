@@ -38,8 +38,10 @@ func inputFunction(s string) []byte {
 	prefix := `comment1=cooking%20MCs;userdata=`
 	suffix := `;comment2=%20like%20a%20pound%20of%20bacon`
 	completeMsg := padByteToNextblockSize([]byte(prefix+s+suffix), blockSize)
+	printByBlocks(completeMsg)
 	iv := make([]byte, 16) // Just empty (I don't think it matters much)
 	cipher := encryptCBC(iv, string(stableKey), completeMsg)
+	printByBlocks(cipher)
 	return cipher
 }
 
@@ -108,16 +110,6 @@ func decryptCBC(iv []byte, key string, bytes []byte) []byte {
 	return result
 }
 
-func encrypted_profile_for(s string) ([]byte, error) {
-	_, stringOut, err := profile_for(s)
-	stringOut = string(padByteToNextblockSize([]byte(stringOut), blockSize))
-	if err != nil {
-		return nil, err
-	} else {
-		return encryptECB(stableKey, []byte(stringOut)), nil
-	}
-}
-
 func padByteVersion(plaintext []byte, size int) []byte {
 	padding := size - len([]byte(plaintext))
 
@@ -139,21 +131,6 @@ func padByteToNextblockSize(plaintext []byte, blockSize int) []byte {
 	return result
 }
 
-func tester(s string) {
-	cipher, err := encrypted_profile_for(string(s))
-	if err != nil {
-		log.Println(err)
-	}
-	printByBlocks([]byte(cipher))
-	plain := decryptECB(string(stableKey), cipher)
-	printByBlocks([]byte(plain))
-	plainPar, err := parsingRoutine(string(plain))
-	if err != nil {
-		log.Println(err)
-	}
-	fmt.Printf("Actual Output of Tester: %s\n-----------------------\n", plainPar)
-}
-
 func printByBlocks(bytes []byte) {
 	println("\n------ START --------\n")
 	for i := 0; i < len(bytes); i += blockSize {
@@ -164,37 +141,16 @@ func printByBlocks(bytes []byte) {
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile) // Very helpful ( I need to improve how I Wrap and display errors)
-	// You can calculate the amount of text needed by just calculating the characters
-	// But this program is more visual (For understanding)
-	admingBlockGetter := "DOG@doggy.com1234567893456" // Fills the first to blocks to get just admin and padding on the last one
-	admin := "admin"
-	adminPadded := padByteToNextblockSize([]byte(admin), blockSize) // We need to pad in the same way
-	admingBlockGetter += string(adminPadded)                        // We will get it on the 3rd block
-	initialPartGetter := "perro12345.com"                           // Get .com&uid=2&role= in a single block (2nd block)
-	tests := []string{admingBlockGetter, initialPartGetter}
-	for i, v := range tests {
-		fmt.Printf("\n----------Test %d -------------\n", i)
-		tester(v)
+	var input string
+	for {
+		fmt.Print("Insert input: ")
+		fmt.Scanln(&input)
+
+		if input == "exit" {
+			break
+		}
+
+		inputFunction(input)
 	}
-	var FullInput []byte
-	initialPart, err := encrypted_profile_for(initialPartGetter)
-	if err != nil {
-		log.Println(err)
-	}
-	initialPart = initialPart[0 : 2*blockSize]
-	adminPart, err := encrypted_profile_for(admingBlockGetter)
-	if err != nil {
-		log.Println(err)
-	}
-	adminPart = adminPart[2*blockSize : 3*blockSize]
-	FullInput = append(FullInput, initialPart...) // This is the solution (We basically just grab each block individually assamble them and it is done)
-	FullInput = append(FullInput, adminPart...)
-	// This part bellow is just for testing
-	DecryptedInput := decryptECB(string(stableKey), FullInput)
-	FinalOutput, err := parsingRoutine(DecryptedInput)
-	if err != nil {
-		log.Println(err)
-	}
-	fmt.Printf("This is the Frankestein cipher Output:  %s\n", FinalOutput)
 
 }
