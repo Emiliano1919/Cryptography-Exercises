@@ -12,6 +12,7 @@ import (
 
 var users int = 0
 var stableKey []byte
+var iv = make([]byte, 16)
 
 const blockSize int = 16
 
@@ -39,10 +40,21 @@ func inputFunction(s string) []byte {
 	suffix := `;comment2=%20like%20a%20pound%20of%20bacon`
 	completeMsg := padByteToNextblockSize([]byte(prefix+s+suffix), blockSize)
 	printByBlocks(completeMsg)
-	iv := make([]byte, 16) // Just empty (I don't think it matters much)
+
 	cipher := encryptCBC(iv, string(stableKey), completeMsg)
 	printByBlocks(cipher)
 	return cipher
+}
+
+func validateAnswer(bytes []byte) bool {
+	plaintext := string(decryptCBC(iv, string(stableKey), bytes))
+	printByBlocks([]byte(plaintext))
+	if strings.Contains(plaintext, ";admin=true;") {
+		return true
+	} else {
+		return false
+	}
+
 }
 
 func init() {
@@ -141,16 +153,18 @@ func printByBlocks(bytes []byte) {
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile) // Very helpful ( I need to improve how I Wrap and display errors)
-	var input string
-	for {
-		fmt.Print("Insert input: ")
-		fmt.Scanln(&input)
-
-		if input == "exit" {
-			break
-		}
-
-		inputFunction(input)
+	output := inputFunction(";admin.true")       // We make our work easy by chosing the plaintext and getting the resulting cipher
+	printByBlocks(output)
+	// We calculate where the point is and modify its equivalent position in the previous block
+	// Since this modification will be passed directly (without the diffusion because it has not been decrypted yet) to XOR with the decrypted text of our target block
+	// We are targeting the . which is 00101110 and we need to get = which is 00111101
+	// We are therefore calculating	00111101 = x XOR 00101110
+	// So we need to XOR the previous block at equivalent position with 00010011 to get the = that we want
+	output[blockSize+7] ^= 0b00010011
+	printByBlocks(output)
+	if validateAnswer(output) {
+		fmt.Printf("\n--------Success--------\n")
+	} else {
+		fmt.Printf("\n-------Failure---------\n")
 	}
-
 }
