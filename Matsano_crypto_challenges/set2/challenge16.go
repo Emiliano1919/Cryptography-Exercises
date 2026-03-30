@@ -152,6 +152,7 @@ func printByBlocks(bytes []byte) {
 }
 
 func main() {
+	// It was nice being able to finally solve this one.
 	log.SetFlags(log.LstdFlags | log.Lshortfile) // Very helpful ( I need to improve how I Wrap and display errors)
 	output := inputFunction(";admin.true")       // We make our work easy by chosing the plaintext and getting the resulting cipher
 	printByBlocks(output)
